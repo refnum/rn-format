@@ -315,6 +315,31 @@ end
 
 
 #==============================================================================
+#		isLineEmpty : Is a line empty?
+#------------------------------------------------------------------------------
+def isLineEmpty(theLine)
+
+	return theLine[:text].empty? && theLine[:comment].empty?
+end
+
+
+
+
+
+#==============================================================================
+#		getEmptyLine : Get an empty line.
+#------------------------------------------------------------------------------
+def getEmptyLine()
+
+	return { :text => "", :comment => "" };
+
+end
+
+
+
+
+
+#==============================================================================
 #		formatComments : Format comment blocks.
 #------------------------------------------------------------------------------
 def formatComments(theLines)
@@ -386,6 +411,44 @@ def formatComments(theLines)
 		end
 	end
 
+	return theLines;
+
+end
+
+
+
+
+
+#==============================================================================
+#		formatGroups : Format groups.
+#------------------------------------------------------------------------------
+def formatGroups(theLines)
+
+	newLines = [];
+	theLines.each_with_index do |theLine, theIndex|
+
+		# Five spaces before comment block
+		#
+		# clang-format is set to reduce blank lines to three, so we
+		# can add two blank lines before a comment block to create
+		# five blank lines between groups.
+		if (theLine[:text].empty? && theLine[:comment] == COMMENT_BAR_TOP)
+		
+			prevLine = theLines[theIndex - 1];
+			
+			if (isLineEmpty(prevLine) || prevLine[:text] =~ /^#pragma/)
+				newLines.insert(newLines.size - 1, getEmptyLine());
+				newLines.insert(newLines.size - 1, getEmptyLine());
+			end
+
+		end
+		
+		newLines << theLine;
+	
+	end
+
+	return newLines;
+
 end
 
 
@@ -414,10 +477,10 @@ def reformattedFile(theArgs, theFile)
 
 	# Apply additional rules
 	if (!theArgs[:clang])
-		theLines = splitLines(theText);
+		theLines = splitLines(    theText);
+		theLines = formatComments(theLines);
+		theLines = formatGroups(  theLines);
 
-		formatComments(theLines);
-		
 		theText = combineLines(theLines);
 	end
 
