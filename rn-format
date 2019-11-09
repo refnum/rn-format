@@ -43,7 +43,10 @@
 #==============================================================================
 # Imports
 #------------------------------------------------------------------------------
+require 'fileutils';
+require 'find';
 require 'optparse';
+require 'tmpdir';
 
 
 
@@ -159,13 +162,25 @@ def checkTools()
 end
 
 
+
+
+
 #==============================================================================
 #		getConfig : Get the config directory.
 #------------------------------------------------------------------------------
-def getConfig(theArgs)
+def getConfig()
 
-	# TODO
-	return "";
+	# Create the config directory
+	#
+	# clang-format looks for its configuration relative to the current
+	# directory, so we invoke it within a temporary directory.
+	pathConfig = Dir.mktmpdir("rn-format");
+	Dir.chdir(pathConfig);
+	
+	File.write("#{pathConfig}/.clang-format", CONFIG_CLANG_FORMAT);
+	
+	return pathConfig;
+
 end
 
 
@@ -177,8 +192,42 @@ end
 #------------------------------------------------------------------------------
 def getFiles(theArgs)
 
-	# TODO
-	return [];
+	theFiles = [];
+
+	theArgs[:paths].each do |pathRoot|
+
+		Find.find(pathRoot) do |thePath|
+			if (File.file?(thePath))
+				theFiles << thePath;
+			end
+		end
+	end
+
+	return theFiles;
+
+end
+
+
+
+
+
+#==============================================================================
+#		reformattedFile : Reformat a file.
+#------------------------------------------------------------------------------
+def reformattedFile(theArgs, theFile)
+
+	# Reformat with clang-format
+	newText = `cat "#{theFile}" | "#{PATH_CLANG_FORMAT}" -style=file`;
+
+
+
+	# Apply additional rules
+	if (!theArgs[:clang])
+		# TODO
+
+	end
+
+	return newText;
 
 end
 
@@ -191,8 +240,20 @@ end
 #------------------------------------------------------------------------------
 def reformatFile(theArgs, theFile)
 
-	# TODO
-	puts "Reformatting #{theFile}";
+	# Reformat the file
+	oldText = File.read(theFile);
+	newText = reformattedFile(theArgs, theFile);
+
+
+	# Rewrite it
+	if (theArgs[:rewrite])
+		if (newText != oldText)
+			puts "Reformatted "#{theFile}";
+			File.write(theFile, newText);
+		end
+	else
+		puts newText;
+	end
 
 end
 
@@ -206,23 +267,22 @@ end
 def reformatFiles(theArgs)
 
 	# Get the state we need
-	pathConfig = getConfig(theArgs);
-	theFiles   = getFiles( theArgs);
+	pathConfig = getConfig();
+	theFiles   = getFiles(theArgs);
 
 
 
 	# Reformat the files
-	Dir.chdir(pathConfig) do
-	
-		theFiles.each do |theFile|
-			reformatFile(theArgs, theFile)
-		end
-	
+	theFiles.each do |theFile|
+		reformatFile(theArgs, theFile)
 	end
 	
 	FileUtils.rm_rf(pathConfig);
 
 end
+
+
+
 
 
 #==============================================================================
