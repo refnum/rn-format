@@ -173,6 +173,24 @@ FRAGMENT
 
 # Comments
 #
+COMMENT_COPYRIGHT=<<FRAGMENT
+/*	NAME:
+		TOKEN_FILENAME
+
+	DESCRIPTION:
+		TOKEN_DESCRIPTION
+
+	COPYRIGHT:
+		Copyright (c) 2006-TOKEN_YEAR, refNum Software
+		<http://www.refnum.com/>
+
+		All rights reserved.
+
+TOKEN_LICENSE
+	___________________________________________________________________________
+*/
+FRAGMENT
+
 COMMENT_BAR_TOP											= "\/\/#{'=' * 77}";
 COMMENT_BAR_CONTENT										= "\/\/\t\t";
 COMMENT_BAR_BOTTOM										= "\/\/#{'-' * 77}";
@@ -189,6 +207,53 @@ COMMENT_STANDARD =	{	"include files"					=> "Includes",
 						"internal types"				=> "Internal Types",
 						"internal functions"			=> "Internal Functions"
 					};
+
+
+# Licenses
+#
+#
+LICENSE_COMMERCIAL=<<FRAGMENT
+		This software is distributed under the terms of your licensing
+		agreement with refNum Software.
+		
+		This license grants you permission to use, copy, modify, or
+		distribute this sofware only under the terms of that license.
+		
+		refNum Software retains full ownership of this software.
+FRAGMENT
+
+LICENSE_BSD=<<FRAGMENT
+		This software is distributed under the BSD-3-Clause license.
+
+		Redistribution and use in source and binary forms, with or without
+		modification, are permitted provided that the following conditions
+		are met:
+
+			o Redistributions of source code must retain the above
+			copyright notice, this list of conditions and the following
+			disclaimer.
+
+			o Redistributions in binary form must reproduce the above
+			copyright notice, this list of conditions and the following
+			disclaimer in the documentation and/or other materials
+			provided with the distribution.
+
+			o Neither the name of refNum Software nor the names of its
+			contributors may be used to endorse or promote products derived
+			from this software without specific prior written permission.
+
+		THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+		"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+		LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+		A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+		OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+		SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+		LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+		DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+		THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+		(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+		OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+FRAGMENT
 
 
 
@@ -456,6 +521,57 @@ end
 
 
 #==============================================================================
+#		rewriteCopyright : Rewrite the copyright.
+#------------------------------------------------------------------------------
+def rewriteCopyright(theText, theFile)
+
+	# Rewrite the copyright
+	#
+	# The copyright is assumed to follow a standard format.
+	theMatch = /\/\*.*NAME:\s+.*?\n.*?DESCRIPTION:\s+(.*)\n.*?COPYRIGHT:.*?\*\//m.match(theText);
+
+	if (theMatch != nil)
+	
+		# Normalise the description
+		theDesc = theMatch[1].rstrip;
+		if (theDesc.empty?)
+			theDesc = "MISSING DESCRIPTION.";
+		
+		elsif (!theDesc.end_with?("."))
+			theDesc += ".";
+		end
+
+
+
+		# Identify the license
+		if (theText.include?("This software is distributed under the BSD-3-Clause license") ||
+			theText.include?("Released under the terms of licence.html"))
+			theLicense = LICENSE_BSD;
+		else
+			theLicense = LICENSE_COMMERCIAL;
+		end
+
+
+
+		# Rewrite the copyright
+		theCopyright = COMMENT_COPYRIGHT.dup();
+		theCopyright.sub!("TOKEN_FILENAME",		File.basename(theFile));
+		theCopyright.sub!("TOKEN_DESCRIPTION",	theDesc);
+		theCopyright.sub!("TOKEN_YEAR",			Time.now.year.to_s);
+		theCopyright.sub!("TOKEN_LICENSE",		theLicense.chomp);
+		
+		theText[theMatch.begin(0)..theMatch.end(0)] = theCopyright;
+	end
+	
+	return theText;
+
+end
+
+
+
+
+
+#==============================================================================
 #		reformattedFile : Reformat a file.
 #------------------------------------------------------------------------------
 def reformattedFile(theArgs, theFile)
@@ -481,7 +597,8 @@ def reformattedFile(theArgs, theFile)
 		theLines = formatComments(theLines);
 		theLines = formatGroups(  theLines);
 
-		theText = combineLines(theLines);
+		theText = combineLines(    theLines);
+		theText = rewriteCopyright(theText, theFile);
 	end
 
 	return theText;
