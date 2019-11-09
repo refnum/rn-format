@@ -58,7 +58,9 @@ require 'tmpdir';
 # Paths
 #
 PATH_CLANG_FORMAT = `which clang-format`.chomp;
+PATH_UNCRUSTIFY   = `which uncrustify`.chomp;
 
+FILE_CONFIG_UNCRUSTIFY = "uncrustify.cfg";
 
 
 # Configuration
@@ -147,6 +149,29 @@ UseTab:													ForIndentation
 FRAGMENT
 
 
+CONFIG_UNCRUSTIFY=<<FRAGMENT
+# ============================================================
+# http://uncrustify.sourceforge.net/configuration.txt
+# http://uncrustify.sourceforge.net/default.cfg
+# ------------------------------------------------------------
+input_tab_size											= 4
+output_tab_size											= 4
+newlines												= lf
+
+utf8_bom												= remove
+utf8_byte												= true
+utf8_force												= true
+
+mod_case_brace											= remove
+mod_full_brace_do										= force
+mod_full_brace_for										= force
+mod_full_brace_if										= force
+mod_full_brace_while									= force
+mod_paren_on_return										= remove
+mod_remove_empty_return									= true
+FRAGMENT
+
+
 
 
 
@@ -159,6 +184,10 @@ def checkTools()
 		abort("Unable to find clang-format!");
 	end
 
+	if (PATH_UNCRUSTIFY.empty?)
+		abort("Unable to find uncrustify!");
+	end
+
 end
 
 
@@ -168,17 +197,24 @@ end
 #==============================================================================
 #		getConfig : Get the config directory.
 #------------------------------------------------------------------------------
-def getConfig()
+def getConfig(theArgs)
 
 	# Create the config directory
 	#
 	# clang-format looks for its configuration relative to the current
-	# directory, so we invoke it within a temporary directory.
+	# directory, so we invoke it within the temporary directory that
+	# will store our config files.
 	pathConfig = Dir.mktmpdir("rn-format");
 	Dir.chdir(pathConfig);
-	
-	File.write("#{pathConfig}/.clang-format", CONFIG_CLANG_FORMAT);
-	
+
+	theArgs[:config] = pathConfig;
+
+
+
+	# Save the configs
+	File.write("#{pathConfig}/.clang-format",				CONFIG_CLANG_FORMAT);
+	File.write("#{pathConfig}/#{FILE_CONFIG_UNCRUSTIFY}",	CONFIG_UNCRUSTIFY);
+
 	return pathConfig;
 
 end
@@ -216,8 +252,18 @@ end
 #------------------------------------------------------------------------------
 def reformattedFile(theArgs, theFile)
 
-	# Reformat with clang-format
-	newText = `cat "#{theFile}" | "#{PATH_CLANG_FORMAT}" -style=file`;
+	# Apply the formatters
+	#
+	# uncrustify is used to perform code transformations, such as
+	# adjusting parentheses or braces.
+	#
+	# clang-format is then used to perform code reformatting.
+	#
+	pathConfigUC = "#{theArgs[:config]}/#{FILE_CONFIG_UNCRUSTIFY}";
+	
+	newText =	`cat "#{theFile}"                                   | \
+				"#{PATH_UNCRUSTIFY}" -q -l CPP -c "#{pathConfigUC}" | \
+				"#{PATH_CLANG_FORMAT}" -style=file`;
 
 
 
@@ -267,8 +313,8 @@ end
 def reformatFiles(theArgs)
 
 	# Get the state we need
-	pathConfig = getConfig();
-	theFiles   = getFiles(theArgs);
+	pathConfig = getConfig(theArgs);
+	theFiles   = getFiles( theArgs);
 
 
 
