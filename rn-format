@@ -87,7 +87,7 @@ AllowShortFunctionsOnASingleLine:						None
 AllowShortIfStatementsOnASingleLine:					false
 AllowShortLambdasOnASingleLine:							None
 AllowShortLoopsOnASingleLine:							false
-AlwaysBreakAfterReturnType:								All
+AlwaysBreakAfterReturnType:								None
 AlwaysBreakBeforeMultilineStrings:						false
 AlwaysBreakTemplateDeclarations:						Yes
 BasedOnStyle:											Google
