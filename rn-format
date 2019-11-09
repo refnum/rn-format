@@ -148,7 +148,6 @@ UseTab:													ForIndentation
 ...
 FRAGMENT
 
-
 CONFIG_UNCRUSTIFY=<<FRAGMENT
 # ============================================================
 # http://uncrustify.sourceforge.net/configuration.txt
@@ -170,6 +169,26 @@ mod_full_brace_while									= force
 mod_paren_on_return										= remove
 mod_remove_empty_return									= true
 FRAGMENT
+
+
+# Comments
+#
+COMMENT_BAR_TOP											= "\/\/#{'=' * 77}";
+COMMENT_BAR_CONTENT										= "\/\/\t\t";
+COMMENT_BAR_BOTTOM										= "\/\/#{'-' * 77}";
+
+COMMENT_STANDARD =	{	"include files"					=> "Includes",
+						"macros"						=> "Macros",
+						"constants"						=> "Constants",
+						"types"							=> "Types",
+						"class declaration"				=> "Class Declaration",
+						"public functions"				=> "Public Functions",
+
+						"internal macros"				=> "Internal Macros",
+						"internal constants"			=> "Internal Constants",
+						"internal types"				=> "Internal Types",
+						"internal functions"			=> "Internal Functions"
+					};
 
 
 
@@ -248,6 +267,132 @@ end
 
 
 #==============================================================================
+#		splitLines : Split text into lines.
+#------------------------------------------------------------------------------
+def splitLines(theText)
+
+	theLines = [];
+	
+	theText.each_line do |theLine|
+	
+		if (theLine =~ /^(.*?)(\/\/.*)/)
+			lineText    = $1;
+			lineComment = $2;
+		else
+			lineText    = theLine.chomp;
+			lineComment = "";
+		end
+
+		theLines << { :text => lineText, :comment => lineComment };
+	
+	end
+
+	return theLines;
+
+end
+
+
+
+
+
+#==============================================================================
+#		combineLines : Combine lines back into text.
+#------------------------------------------------------------------------------
+def combineLines(theLines)
+
+	theText = "";
+	
+	theLines.each do |theLine|
+		theText += theLine[:text] + theLine[:comment] + "\n";
+	end
+
+	return theText;
+
+end
+
+
+
+
+
+#==============================================================================
+#		formatComments : Format comment blocks.
+#------------------------------------------------------------------------------
+def formatComments(theLines)
+
+	theLines.each_with_index do |theLine, theIndex|
+
+		if (theIndex >= 2)
+		
+			line0 = theLines[theIndex - 2];
+			line1 = theLines[theIndex - 1];
+			line2 = theLines[theIndex - 0];
+			
+			if (line0[:text].empty? &&
+				line1[:text].empty? &&
+				line2[:text].empty? &&
+
+				line0[:comment] =~ /^\/\/==========+/ &&
+				line2[:comment] =~ /^\/\/----------+/ &&
+				line1[:comment] =~ /^\/\/\s*(.*)/    )
+
+
+				# Fix up standard blocks
+				theComment = $1;
+				commentKey = $1.chomp('.').downcase;
+
+				if (COMMENT_STANDARD.has_key?(commentKey))
+					theComment = COMMENT_STANDARD[commentKey];
+
+
+				# Fix up function blocks
+				else
+					# Split the comment
+					if (theComment =~ /^(.*):\s*(.*)$/)
+						theName = $1.strip;
+						theDesc = $2.strip.chomp(".");
+					
+					else
+						theName = theComment;
+						theDesc = "";
+					end
+
+
+					# Normalise the description
+					if (theName =~ /^(\w+)::\1$/)
+						theDesc = "Constructor.";
+					
+					elsif (theName =~ /^(\w+)::~\1$/)
+						theDesc = "Destructor.";
+					
+					elsif (theDesc.empty?)
+						theDesc = "MISSING DESCRIPTION.";
+					end
+				
+					if (!theDesc.end_with?(".", "?", "!"))
+						theDesc += ".";
+					end
+					
+					theComment = theName + " : " + theDesc;
+				end
+
+
+
+				# Rewrite the the comment
+				theLines[theIndex - 2][:comment] = COMMENT_BAR_TOP;
+				theLines[theIndex - 1][:comment] = COMMENT_BAR_CONTENT + theComment;
+				theLines[theIndex - 0][:comment] = COMMENT_BAR_BOTTOM;
+			end
+		
+		end
+	end
+
+end
+
+
+
+
+
+#==============================================================================
 #		reformattedFile : Reformat a file.
 #------------------------------------------------------------------------------
 def reformattedFile(theArgs, theFile)
@@ -261,7 +406,7 @@ def reformattedFile(theArgs, theFile)
 	#
 	pathConfigUC = "#{theArgs[:config]}/#{FILE_CONFIG_UNCRUSTIFY}";
 	
-	newText =	`cat "#{theFile}"                                   | \
+	theText =	`cat "#{theFile}"                                   | \
 				"#{PATH_UNCRUSTIFY}" -q -l CPP -c "#{pathConfigUC}" | \
 				"#{PATH_CLANG_FORMAT}" -style=file`;
 
@@ -269,11 +414,14 @@ def reformattedFile(theArgs, theFile)
 
 	# Apply additional rules
 	if (!theArgs[:clang])
-		# TODO
+		theLines = splitLines(theText);
 
+		formatComments(theLines);
+		
+		theText = combineLines(theLines);
 	end
 
-	return newText;
+	return theText;
 
 end
 
