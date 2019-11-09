@@ -114,7 +114,6 @@ IndentPPDirectives:										BeforeHash
 IndentWidth:											4
 IndentWrappedFunctionNames:								false
 KeepEmptyLinesAtTheStartOfBlocks:						false
-Language:												Cpp
 MaxEmptyLinesToKeep:									3
 NamespaceIndentation:									None
 ObjCBinPackProtocolList:								Auto
@@ -622,7 +621,7 @@ def reformatFile(theArgs, theFile)
 	# Rewrite it
 	if (theArgs[:rewrite])
 		if (newText != oldText)
-			puts "Reformatted "#{theFile}";
+			puts "Reformatted #{theFile}";
 			File.write(theFile, newText);
 		end
 	else
