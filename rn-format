@@ -1,0 +1,297 @@
+#!/usr/bin/ruby -w
+#==============================================================================
+#	NAME:
+#		rn-format
+#
+#	DESCRIPTION:
+#		clang-format source code formatter.
+#
+#	COPYRIGHT:
+#		Copyright (c) 2019, refNum Software
+#		<http://www.refnum.com/>
+#
+#		All rights reserved.
+#
+#		Redistribution and use in source and binary forms, with or without
+#		modification, are permitted provided that the following conditions
+#		are met:
+#
+#			o Redistributions of source code must retain the above
+#			copyright notice, this list of conditions and the following
+#			disclaimer.
+#
+#			o Redistributions in binary form must reproduce the above
+#			copyright notice, this list of conditions and the following
+#			disclaimer in the documentation and/or other materials
+#			provided with the distribution.
+#
+#			o Neither the name of refNum Software nor the names of its
+#			contributors may be used to endorse or promote products derived
+#			from this software without specific prior written permission.
+#
+#		THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#		"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#		LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+#		A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+#		OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+#		SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+#		LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#		DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#		THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#		(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#		OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#==============================================================================
+# Imports
+#------------------------------------------------------------------------------
+require 'optparse';
+
+
+
+
+
+#==============================================================================
+#		Constants
+#------------------------------------------------------------------------------
+# Paths
+#
+PATH_CLANG_FORMAT = `which clang-format`.chomp;
+
+
+
+# Configuration
+#
+CONFIG_CLANG_FORMAT=<<FRAGMENT
+# ============================================================
+# https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+# ------------------------------------------------------------
+---
+AccessModifierOffset:									-4
+AlignAfterOpenBracket:									Align
+AlignConsecutiveAssignments:							true
+AlignConsecutiveDeclarations:							true
+AlignConsecutiveMacros:									true
+AlignEscapedNewlines:									Left
+AlignOperands:											true
+AlignTrailingComments:									true
+AllowAllArgumentsOnNextLine:							false
+AllowAllConstructorInitializersOnNextLine:				false
+AllowAllParametersOfDeclarationOnNextLine:				false
+AllowShortBlocksOnASingleLine:							false
+AllowShortCaseLabelsOnASingleLine:						false
+AllowShortFunctionsOnASingleLine:						None
+AllowShortIfStatementsOnASingleLine:					false
+AllowShortLambdasOnASingleLine:							None
+AllowShortLoopsOnASingleLine:							false
+AlwaysBreakAfterReturnType:								All
+AlwaysBreakBeforeMultilineStrings:						false
+AlwaysBreakTemplateDeclarations:						Yes
+BasedOnStyle:											Google
+BinPackArguments:										false
+BinPackParameters:										false
+BreakBeforeBinaryOperators:								None
+BreakBeforeBraces:										Allman
+BreakBeforeTernaryOperators:							true
+BreakConstructorInitializers:							BeforeComma
+BreakInheritanceList:									BeforeComma
+BreakStringLiterals:									true
+ColumnLimit:											100
+CompactNamespaces:										false
+ConstructorInitializerAllOnOneLineOrOnePerLine:			false
+ConstructorInitializerIndentWidth:						4
+ContinuationIndentWidth:								4
+Cpp11BracedListStyle:									true
+DerivePointerAlignment:									false
+FixNamespaceComments:									true
+IncludeBlocks:											Merge
+IndentCaseLabels:										true
+IndentGotoLabels:										false
+IndentPPDirectives:										BeforeHash
+IndentWidth:											4
+IndentWrappedFunctionNames:								false
+KeepEmptyLinesAtTheStartOfBlocks:						false
+Language:												Cpp
+MaxEmptyLinesToKeep:									3
+NamespaceIndentation:									None
+ObjCBinPackProtocolList:								Auto
+ObjCBlockIndentWidth:									4
+ObjCSpaceAfterProperty:									true
+ObjCSpaceBeforeProtocolList:							true
+PointerAlignment:										Left
+ReflowComments:											false
+SortIncludes:											true
+SortUsingDeclarations:									true
+SpaceAfterCStyleCast:									true
+SpaceAfterLogicalNot:									false
+SpaceAfterTemplateKeyword:								false
+SpaceBeforeAssignmentOperators:							true
+SpaceBeforeCpp11BracedList:								false
+SpaceBeforeCtorInitializerColon:						true
+SpaceBeforeInheritanceColon:							true
+SpaceBeforeParens:										ControlStatements
+SpaceBeforeRangeBasedForLoopColon:						true
+SpaceInEmptyBlock:										true
+SpaceInEmptyParentheses:								false
+SpacesBeforeTrailingComments:							4
+SpacesInAngles:											false
+SpacesInContainerLiterals:								false
+SpacesInCStyleCastParentheses:							false
+SpacesInParentheses:									false
+SpacesInSquareBrackets:									false
+Standard:												Latest
+TabWidth:												4
+UseTab:													ForIndentation
+...
+FRAGMENT
+
+
+
+
+
+#==============================================================================
+#		checkTools : Check we have the tools we need.
+#------------------------------------------------------------------------------
+def checkTools()
+
+	if (PATH_CLANG_FORMAT.empty?)
+		abort("Unable to find clang-format!");
+	end
+
+end
+
+
+#==============================================================================
+#		getConfig : Get the config directory.
+#------------------------------------------------------------------------------
+def getConfig(theArgs)
+
+	# TODO
+	return "";
+end
+
+
+
+
+
+#==============================================================================
+#		getFiles : Get the files to process.
+#------------------------------------------------------------------------------
+def getFiles(theArgs)
+
+	# TODO
+	return [];
+
+end
+
+
+
+
+
+#==============================================================================
+#		reformatFile : Reformat a file.
+#------------------------------------------------------------------------------
+def reformatFile(theArgs, theFile)
+
+	# TODO
+	puts "Reformatting #{theFile}";
+
+end
+
+
+
+
+
+#==============================================================================
+#		reformatFiles : Reformat the files.
+#------------------------------------------------------------------------------
+def reformatFiles(theArgs)
+
+	# Get the state we need
+	pathConfig = getConfig(theArgs);
+	theFiles   = getFiles( theArgs);
+
+
+
+	# Reformat the files
+	Dir.chdir(pathConfig) do
+	
+		theFiles.each do |theFile|
+			reformatFile(theArgs, theFile)
+		end
+	
+	end
+	
+	FileUtils.rm_rf(pathConfig);
+
+end
+
+
+#==============================================================================
+#		getArguments : Get the arguments.
+#------------------------------------------------------------------------------
+def getArguments
+
+	# Parse the arguments
+	theArgs = { :clang   => false,
+				:rewrite => false,
+				:help    => false,
+				:paths   => [] }
+
+	theParser = OptionParser.new do |opts|
+		opts.banner    = "Usage:\n    rn-format [--help] [--clang] [--rewrite] PATH [PATH...]";
+		opts.separator "";
+		opts.separator "Reformat any source files within the supplied paths,";
+		opts.separator "displaying the results to standard output.";
+		opts.separator "";
+		opts.separator "Options:";
+
+		opts.on('-c', '--clang',					'Show raw clang-format output') do
+			theArgs[:clang] = true;
+		end
+
+		opts.on('-r', '--rewrite',					'Rewrite files in-place') do
+			theArgs[:rewrite] = true;
+		end
+
+		opts.on('-h', '--help',						'Show the help') do
+			theArgs[:help] = true;
+		end
+	end
+
+	theParser.parse!;
+	theArgs[:paths] = ARGV;
+
+
+
+	# Show the help
+	if (theArgs[:help] || theArgs[:paths].empty?)
+		puts theParser.help();
+		exit(false);
+	end
+	
+	return theArgs;
+
+end
+
+
+
+
+
+#==============================================================================
+#		rnformat : Code reformatter.
+#------------------------------------------------------------------------------
+def rnformat
+
+	# Get the state we need
+	checkTools();
+	
+	theArgs = getArguments();
+
+
+
+	# Reformat the files
+	reformatFiles(theArgs);
+
+end
+
+rnformat();
+
