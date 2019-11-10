@@ -211,7 +211,6 @@ COMMENT_STANDARD =	{	"include files"					=> "Includes",
 
 # Licenses
 #
-#
 LICENSE_COMMERCIAL=<<FRAGMENT
 		This software is distributed under the terms of your licensing
 		agreement with refNum Software.
@@ -634,6 +633,29 @@ end
 
 
 #==============================================================================
+#		alignContinuations : Align line continuations.
+#------------------------------------------------------------------------------
+def alignContinuations(theLines)
+
+	theLines.each do |theLine|
+
+		if (theLine[:text] =~ /^(.*)\s+\\$/ && theLine[:comment].empty?)
+			theText = $1;
+			
+			if (theText.size < CONFIG_ALIGN_ASSIGNMENT)
+				theLine[:text] = theText.ljust(CONFIG_ALIGN_ASSIGNMENT) + "\\";
+			end
+		end
+
+	end
+
+end
+
+
+
+
+
+#==============================================================================
 #		alignTokens : Align consecutive tokens.
 #------------------------------------------------------------------------------
 def alignTokens(theLines, matchLine, matchTokens, findAfter=nil)
@@ -935,7 +957,8 @@ end
 #------------------------------------------------------------------------------
 def formatPreprocessor(theLines)
 
-	alignEndifs(theLines);
+	alignEndifs(		theLines);
+	alignContinuations(	theLines);
 
 	return theLines;
 
