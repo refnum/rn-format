@@ -139,7 +139,7 @@ SpacesInParentheses:									false
 SpacesInSquareBrackets:									false
 Standard:												Latest
 TabWidth:												4
-UseTab:													ForIndentation
+UseTab:													Never
 ...
 FRAGMENT
 
@@ -164,6 +164,10 @@ mod_full_brace_while									= force
 mod_paren_on_return										= remove
 mod_remove_empty_return									= true
 FRAGMENT
+
+CONFIG_TAB_WIDTH										= 4
+CONFIG_ALIGN_MEMBER										= CONFIG_TAB_WIDTH * 10;
+CONFIG_ALIGN_ASSIGNMENT									= CONFIG_TAB_WIDTH * 15;
 
 
 # Comments
@@ -243,6 +247,10 @@ LICENSE_BSD=<<FRAGMENT
 		(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 		OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 FRAGMENT
+
+
+# Lines
+EMPTY_LINE = { :text => "", :comment => "" };
 
 
 
@@ -381,11 +389,109 @@ end
 
 
 #==============================================================================
-#		getEmptyLine : Get an empty line.
+#		getLine : Get a line from an array.
 #------------------------------------------------------------------------------
-def getEmptyLine()
+def getLine(theLines, theIndex)
 
-	return { :text => "", :comment => "" };
+	return theLines.fetch(theIndex, EMPTY_LINE);
+
+end
+
+
+
+
+
+#==============================================================================
+#		replaceVoids : Replace '(void)' parameters.
+#------------------------------------------------------------------------------
+def replaceVoids(theLines)
+
+	theLines.each do |theLine|
+		theLine[:text].gsub!(/\(\s*void\s*\)/, '()');
+	end
+	
+end
+
+
+
+
+
+#==============================================================================
+#		indentMembers : Indent members within a class.
+#------------------------------------------------------------------------------
+def indentMembers(theLines)
+
+	paramIndent = 0;
+	indentType = (" " * CONFIG_TAB_WIDTH);
+
+	theLines.each_with_index do |theLine, theIndex|
+	
+		# Get the state we need
+		theText = theLine[:text];
+
+
+		# Constructors
+		if (theText =~ /^    (\w+)(\(.*)/)
+			methodName   = $1;
+			methodParams = $2;
+			
+			spanSize = CONFIG_ALIGN_MEMBER;
+			theText = (" " * spanSize) + methodName + methodParams;
+			
+			if (theText.end_with?(","))
+				paramIndent = theText.size() - methodParams.size() + 1;
+			end
+
+
+		# Destructors
+		elsif (theText =~ /^(.*)(\s~\w+)(\(.*)/)
+			methodVirtual = $1.strip;
+			methodName    = $2.strip;
+			methodParams  = $3;
+			
+			spanSize = CONFIG_ALIGN_MEMBER - 2;
+			theText = (indentType + methodVirtual).ljust(spanSize) + " " + methodName + methodParams;
+
+
+		# Methods
+		elsif (theText =~ /^    (\w.*?)\s+(\w+)(\(.*)/)
+			methodType = $1;
+			methodName = $2;
+			methodParams = $3;
+			
+			spanSize = CONFIG_ALIGN_MEMBER - 1;
+			theText = (indentType + methodType).ljust(spanSize) + " " + methodName + methodParams;
+					
+			if (theText.end_with?(","))
+				paramIndent = theText.size() - methodParams.size() + 1;
+			end
+
+
+		# Members
+		elsif (theText =~ /^    (\w.*?)\s+(\w+;)/ ||
+			   theText =~ /^    (\w.*?)\s+(\w+\[.+;)/)
+		
+			memberType = $1;
+			memberName = $2;
+			
+			spanSize = CONFIG_ALIGN_MEMBER - 1;
+			theText = (indentType + memberType).ljust(spanSize) + " " + memberName;
+
+
+		# Parameters
+		elsif (paramIndent != 0)
+			theText.sub!(/^\s+/, " " * paramIndent);
+			
+			if (theText.include?(")"))
+				paramIndent = 0;
+			end
+		end
+
+
+		# Update the line
+		theLine[:text] = theText;
+	
+	end
 
 end
 
@@ -494,8 +600,8 @@ def formatGroups(theLines)
 			prevLine = theLines[theIndex - 1];
 			
 			if (isLineEmpty(prevLine) || prevLine[:text] =~ /^#pragma/)
-				newLines.insert(newLines.size - 1, getEmptyLine());
-				newLines.insert(newLines.size - 1, getEmptyLine());
+				newLines.insert(newLines.size - 1, EMPTY_LINE);
+				newLines.insert(newLines.size - 1, EMPTY_LINE);
 			end
 
 		end
@@ -530,6 +636,204 @@ def formatPreprocessor(theLines)
 	end
 
 	return theLines;
+
+end
+
+
+
+
+
+#==============================================================================
+#		formatEnum : Format an enum.
+#------------------------------------------------------------------------------
+def formatEnum(theLines)
+	# TODO
+end
+
+
+
+
+
+#==============================================================================
+#		formatStruct : Format a struct.
+#------------------------------------------------------------------------------
+def formatStruct(theLines)
+	# TODO
+end
+
+
+
+
+
+#==============================================================================
+#		formatClass : Format a class.
+#------------------------------------------------------------------------------
+def formatClass(theLines)
+
+	replaceVoids(	theLines);
+	indentMembers(	theLines);
+
+end
+
+
+
+
+
+#==============================================================================
+#		formatConstructor : Format a constructor.
+#------------------------------------------------------------------------------
+def formatConstructor(theLines)
+
+	replaceVoids(theLines);
+
+end
+
+
+
+
+
+#==============================================================================
+#		formatFunction : Format a function.
+#------------------------------------------------------------------------------
+def formatFunction(theLines)
+
+	replaceVoids(theLines);
+
+end
+
+
+
+
+
+#==============================================================================
+#		formatGlobal : Format a global scope.
+#------------------------------------------------------------------------------
+def formatGlobal(theLines)
+	# TODO
+end
+
+
+
+
+
+#==============================================================================
+#		formatScope : Format a scope.
+#------------------------------------------------------------------------------
+def formatScope(theScope, theLines)
+
+	newLines = theLines.dup;
+	
+	case theScope
+	when :enum
+		formatEnum(newLines);
+	
+	when :struct
+		formatStruct(newLines);
+	
+	when :class
+		formatClass(newLines);
+	
+	when :constructor
+		formatConstructor(newLines);
+
+	when :function
+		formatFunction(newLines);
+	
+	when :global
+		formatGlobal(newLines);
+	end
+	
+	return newLines;
+
+end
+
+
+
+
+
+#==============================================================================
+#		identifyScope : Identify a scope.
+#------------------------------------------------------------------------------
+def identifyScope(theLine, currentScope)
+
+	theText  = theLine[:text];
+	newScope = currentScope;
+	
+	if (theText =~ /^enum /)
+		newScope = :enum;
+	
+	elsif (theText =~ /^struct /)
+		newScope = :struct;
+	
+	elsif (theText =~ /^class /)
+		newScope = :class;
+	
+	elsif (theText =~ /^(\w+)::\1\(/)
+		newScope = :constructor;
+	
+	elsif (theText == "{")
+		if (currentScope == :global)
+			newScope = :function;
+		end
+	
+	elsif (theText == "}")
+		newScope = :global;
+	end
+	
+	return newScope;
+
+end
+
+
+
+
+
+#==============================================================================
+#		formatScopes : Format scopes.
+#------------------------------------------------------------------------------
+def formatScopes(theLines)
+
+	# Process the lines
+	resultLines  = [];
+	currentLines = [];
+	currentScope = :global;
+
+	theLines.each do |theLine|
+	
+		# Get the state we need
+		theScope     = identifyScope(theLine, currentScope);
+		currentLines << theLine;
+		
+		
+		# Switch scope
+		if (theScope != currentScope)
+			# Push comments
+			#
+			# Scopes that start with a comment block consume the comment as
+			# part of the scope, rather than part of the previous scope.
+			newLines = [];
+			
+			if (theScope == :constructor || theScope == :function)
+				while (!currentLines.empty? && !isLineEmpty(currentLines.last()))
+					newLines.insert(0, currentLines.pop);
+				end
+			end
+			
+			
+			# Format the scope
+			resultLines += formatScope(currentScope, currentLines);
+			currentScope = theScope;
+			currentLines = newLines;
+		end
+
+	end
+
+
+
+	# Close the final scope
+	resultLines += formatScope(currentScope, currentLines);
+	
+	return resultLines;
 
 end
 
@@ -646,6 +950,7 @@ def reformattedFile(theArgs, theFile)
 		theLines = formatComments(		theLines);
 		theLines = formatGroups(		theLines);
 		theLines = formatPreprocessor(	theLines);
+		theLines = formatScopes(		theLines);
 
 		theText = combineLines(			theLines);
 		theText = rewriteCopyright(		theText, theFile);
