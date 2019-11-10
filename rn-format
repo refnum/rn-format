@@ -454,11 +454,22 @@ def indentMembers(theLines)
 
 
 		# Methods
-		elsif (theText =~ /^    (\w.*?)\s+(\w+)(\(.*)/)
-			methodType = $1;
-			methodName = $2;
+		elsif (theText =~ /^    (\w.*?)\s+(\w+)(\(.*)/ ||
+			   theText =~ /^    (\w.*?)\s+(operator.+)(\(.*)/)
+			methodType   = $1;
+			methodName   = $2;
 			methodParams = $3;
 			
+			if (methodType =~ /(.*)\s+operator$/)
+				methodType = $1;
+				methodName = "operator #{methodName}";
+			end
+
+			if (methodType == "operator")
+				methodType = "";
+				methodName = "operator #{methodName}";
+			end
+
 			spanSize = CONFIG_ALIGN_MEMBER - 1;
 			theText = (indentType + methodType).ljust(spanSize) + " " + methodName + methodParams;
 					
