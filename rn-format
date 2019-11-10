@@ -842,6 +842,33 @@ end
 
 
 #==============================================================================
+#		formatIndents : Format indentation.
+#------------------------------------------------------------------------------
+def formatIndents(theLines)
+
+	theLines.each do |theLine|
+	
+		if (theLine[:text] =~ /^(\s+)(.*)/)
+			textPrefix = $1;
+			textSuffix = $2;
+			
+			numTabs   = textPrefix.size / CONFIG_TAB_WIDTH;
+			numSpaces = textPrefix.size % CONFIG_TAB_WIDTH;
+
+			theLine[:text] = ("\t" * numTabs) + (" " * numSpaces) + textSuffix;
+		end
+
+	end
+	
+	return theLines;
+
+end
+
+
+
+
+
+#==============================================================================
 #		rewriteCopyright : Rewrite the copyright.
 #------------------------------------------------------------------------------
 def rewriteCopyright(theText, theFile)
@@ -951,6 +978,7 @@ def reformattedFile(theArgs, theFile)
 		theLines = formatGroups(		theLines);
 		theLines = formatPreprocessor(	theLines);
 		theLines = formatScopes(		theLines);
+		theLines = formatIndents(		theLines);
 
 		theText = combineLines(			theLines);
 		theText = rewriteCopyright(		theText, theFile);
