@@ -513,6 +513,31 @@ end
 
 
 #==============================================================================
+#		formatPreprocessor : Format preprocessor directives.
+#------------------------------------------------------------------------------
+def formatPreprocessor(theLines)
+
+	theLines.each do |theLine|
+
+		# Collapse whitespace after #endif
+		#
+		# clang-format inserts IndentWidth spaces between a #endif
+		# and its comment.
+		if (theLine[:text] =~ /^(#endif\s)\s+/ && !theLine[:comment].empty?)
+			theLine[:text] = $1;
+		end
+
+	end
+
+	return theLines;
+
+end
+
+
+
+
+
+#==============================================================================
 #		rewriteCopyright : Rewrite the copyright.
 #------------------------------------------------------------------------------
 def rewriteCopyright(theText, theFile)
@@ -564,6 +589,38 @@ end
 
 
 #==============================================================================
+#		rewriteHeaderGuard : Rewrite the header guard.
+#------------------------------------------------------------------------------
+def rewriteHeaderGuard(theText, theFile)
+
+	# Rewrite the header guard
+	#
+	# The header guard name is derived from the file name.
+	if (File.extname(theFile) == ".h")
+
+		theMatch = /#ifndef (\w+)\n#define (\1)\n.*#endif \/\/ (\1)\n/m.match(theText);
+
+		if (theMatch != nil)
+			theName = File.basename(theFile);
+			theName = theName.split(/(?<=[a-z])(?=[A-Z])/).join("_");
+			theName = theName.sub(".", "_").upcase;
+
+			theText[theMatch.begin(3)..theMatch.end(3) - 1] = theName;
+			theText[theMatch.begin(2)..theMatch.end(2) - 1] = theName;
+			theText[theMatch.begin(1)..theMatch.end(1) - 1] = theName;
+		end
+
+	end
+
+	return theText;
+
+end
+
+
+
+
+
+#==============================================================================
 #		reformattedFile : Reformat a file.
 #------------------------------------------------------------------------------
 def reformattedFile(theArgs, theFile)
@@ -585,12 +642,14 @@ def reformattedFile(theArgs, theFile)
 
 	# Apply additional rules
 	if (!theArgs[:clang])
-		theLines = splitLines(    theText);
-		theLines = formatComments(theLines);
-		theLines = formatGroups(  theLines);
+		theLines = splitLines(			theText);
+		theLines = formatComments(		theLines);
+		theLines = formatGroups(		theLines);
+		theLines = formatPreprocessor(	theLines);
 
-		theText = combineLines(    theLines);
-		theText = rewriteCopyright(theText, theFile);
+		theText = combineLines(			theLines);
+		theText = rewriteCopyright(		theText, theFile);
+		theText = rewriteHeaderGuard(	theText, theFile);
 	end
 
 	return theText;
