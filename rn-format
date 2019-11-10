@@ -633,42 +633,6 @@ end
 
 
 #==============================================================================
-#		formatGroups : Format groups.
-#------------------------------------------------------------------------------
-def formatGroups(theLines)
-
-	newLines = [];
-	theLines.each_with_index do |theLine, theIndex|
-
-		# Five spaces before comment block
-		#
-		# clang-format is set to reduce blank lines to three, so we
-		# can add two blank lines before a comment block to create
-		# five blank lines between groups.
-		if (theLine[:text].empty? && theLine[:comment] == COMMENT_BAR_TOP)
-		
-			prevLine = theLines[theIndex - 1];
-			
-			if (isLineEmpty(prevLine) || prevLine[:text] =~ /^#pragma/)
-				newLines.insert(newLines.size - 1, EMPTY_LINE);
-				newLines.insert(newLines.size - 1, EMPTY_LINE);
-			end
-
-		end
-		
-		newLines << theLine;
-	
-	end
-
-	return newLines;
-
-end
-
-
-
-
-
-#==============================================================================
 #		formatPreprocessor : Format preprocessor directives.
 #------------------------------------------------------------------------------
 def formatPreprocessor(theLines)
@@ -1003,6 +967,24 @@ end
 
 
 #==============================================================================
+#		rewriteGroups : Rewrite the groups.
+#------------------------------------------------------------------------------
+def rewriteGroups(theText)
+
+	# Rewrite the groups
+	#
+	# Five blank lines between groups.
+	theText = theText.gsub(/\n\n+#{COMMENT_BAR_TOP}/, "\n\n\n\n\n\n#{COMMENT_BAR_TOP}");
+
+	return theText;
+
+end
+
+
+
+
+
+#==============================================================================
 #		reformattedFile : Reformat a file.
 #------------------------------------------------------------------------------
 def reformattedFile(theArgs, theFile)
@@ -1026,7 +1008,6 @@ def reformattedFile(theArgs, theFile)
 	if (!theArgs[:clang])
 		theLines = splitLines(			theText);
 		theLines = formatComments(		theLines);
-		theLines = formatGroups(		theLines);
 		theLines = formatPreprocessor(	theLines);
 		theLines = formatScopes(		theLines);
 		theLines = formatIndents(		theLines);
@@ -1034,6 +1015,7 @@ def reformattedFile(theArgs, theFile)
 		theText = combineLines(			theLines);
 		theText = rewriteCopyright(		theText, theFile);
 		theText = rewriteHeaderGuard(	theText, theFile);
+		theText = rewriteGroups(		theText);
 	end
 
 	return theText;
