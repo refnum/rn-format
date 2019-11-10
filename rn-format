@@ -166,6 +166,9 @@ mod_remove_empty_return									= true
 FRAGMENT
 
 CONFIG_TAB_WIDTH										= 4
+CONFIG_ALIGN_LINES										= 10;
+
+CONFIG_ALIGN_SLIDE										= CONFIG_TAB_WIDTH * 3;
 CONFIG_ALIGN_MEMBER										= CONFIG_TAB_WIDTH * 10;
 CONFIG_ALIGN_ASSIGNMENT									= CONFIG_TAB_WIDTH * 15;
 
@@ -550,6 +553,233 @@ end
 
 
 #==============================================================================
+#		findTokenInText : Find a token within some text.
+#------------------------------------------------------------------------------
+def findTokenInText(theText, theToken, findAfter)
+
+	if (findAfter == nil)
+		theOffset = theText.index(theToken);
+	else
+		theOffset = theText.index(findAfter);
+		if (theOffset != nil)
+			theOffset = theText.index(theToken, theOffset);
+		end
+	end
+	
+	return theOffset;
+
+end
+
+
+
+
+
+#==============================================================================
+#		findTokenInLine : Find a token within a line.
+#------------------------------------------------------------------------------
+def findTokenInLine(theLine, theToken, findAfter)
+
+	theText   = theLine[:text];
+	theOffset = nil;
+
+	if (theText.include?('"'))
+		baseOffset = 0;
+		theText.split('"').each_with_index do |theChunk, theIndex|
+
+			insideQuote = theIndex.odd?
+			if (insideQuote)
+				baseOffset += 2;
+			else
+				theOffset = findTokenInText(theChunk, theToken, findAfter);
+				if (theOffset != nil)
+					return baseOffset + theOffset;
+				end
+			end
+
+			baseOffset += theChunk.size;
+		end 
+	else
+		theOffset = findTokenInText(theText, theToken, findAfter);
+	end
+
+	return theOffset;
+
+end
+
+
+
+
+
+#==============================================================================
+#		alignTokens : Align consecutive tokens.
+#------------------------------------------------------------------------------
+def alignTokens(theLines, matchLine, matchTokens, findAfter=nil)
+
+	# Align the tokens
+	#
+	# Tokens that appear on consecutive lines are aligned to the
+	# rightmost instance of that token across that group of lines.
+	theLines.each_with_index do |theLine, theIndex|
+		if (matchLine.match(theLine[:text]))
+
+			# Build the order
+			#
+			# Tokens are processed in the order that they appear on the line,
+			# so that we always extend existing alignment from left to right.
+			tokenOrder = Hash.new();
+			
+			matchTokens.each do |theToken|
+				tokenOffset = findTokenInLine(theLine, theToken, findAfter);
+				
+				if (tokenOffset != nil)
+					tokenOrder[tokenOffset] = theToken;
+				end
+			end
+
+
+
+			# Align the tokens
+			tokenOrder.keys.sort.each do |tokenOffset|
+
+				# Find the token on this line
+				theToken  = tokenOrder[tokenOffset];
+				theOffset = findTokenInLine(theLine, theToken, findAfter);
+
+				if (theOffset != nil)
+					# Find on previous lines
+					theOffsets = [theOffset];
+				
+					for n in 1..CONFIG_ALIGN_LINES do
+						lineMinusN = theLines[theIndex - n];
+						theOffset  = nil;
+
+						if (matchLine.match(lineMinusN[:text]))
+							theOffset = findTokenInLine(lineMinusN, theToken, findAfter);
+						end
+					
+						if (theOffset != nil)
+							theOffsets << theOffset;
+						else
+							break;
+						end
+					end
+
+
+
+					# Align those lines
+					if (theOffsets.size > 1)
+
+						# Dump the state before
+						debugAlign = false;
+
+						if (debugAlign)
+							puts "Found #{theOffsets.size} instances of [#{theToken}]:";
+							for n in 0...theOffsets.size do
+								puts "[#{n}] [#{theLines[theIndex - n][:text]}]";
+								puts "     " + (" " * theOffsets[n]) + "^";
+							end
+						end
+
+
+						# Apply the alignment
+						maxOffset = theOffsets.max;
+					
+						for n in 0...theOffsets.size do
+							theOffset   = theOffsets[n];
+							offsetDelta = maxOffset - theOffset;
+						
+							if (offsetDelta >= 0 && offsetDelta < CONFIG_ALIGN_SLIDE)
+								padAlign = " " * offsetDelta;
+								theLines[theIndex - n][:text].insert(theOffset, padAlign);
+							end
+						end
+
+
+						# Dump the state after
+						if (debugAlign)
+							puts "After aligning [#{theToken}]";
+							for n in 0...theOffsets.size do
+								puts "[#{n}] [#{theLines[theIndex - n][:text]}]";
+							end
+							puts "";
+						end
+
+					end
+				end
+
+			end
+
+		end
+	end
+
+
+end
+
+
+
+
+
+#==============================================================================
+#		alignParams : Align parameters.
+#------------------------------------------------------------------------------
+def alignParams(theLines)
+
+	# Collect the parameters
+	#
+	# Nested parameters are replaced with commas, allowing them to
+	# be discarded when the parameter list is converted to tokens.
+	theParams = [];
+
+	theLines.each do |theLine|
+		if (theLine[:text] =~ /\((.*)\).*;$/)
+			theParams << $1.gsub(/[\(\)]/, ",");
+		end
+	end
+
+
+
+	# Build the tokens
+	#
+	# Alignment can be performed on either type or name.
+	theTokens = [];
+	
+	theParams.each do |theParam|
+		theParam.split(",").each do |theToken|
+		
+			theToken = theToken.gsub(/[*&]/, "").strip;
+			
+			if (theToken.empty? || theToken =~ /^[\.\-]/)
+				# Discard empty params or dereferences
+			
+			elsif (theToken.include?(" "))
+				theTokens.concat(theToken.split(/\s+/));
+			
+			else
+				theTokens << theToken;
+			end
+
+		end
+	end
+
+
+
+	# Align the tokens
+	matchTokens = [];
+	matchLine   = /\(/;
+
+	theTokens.uniq.each do |theToken|
+		matchTokens << Regexp.new(/\b#{Regexp.escape(theToken)}\b/);
+	end
+
+	alignTokens(theLines, matchLine, matchTokens, "(");
+
+end
+
+
+
+
+
+#==============================================================================
 #		formatComments : Format comment blocks.
 #------------------------------------------------------------------------------
 def formatComments(theLines)
@@ -687,6 +917,7 @@ def formatClass(theLines)
 	replaceVoids(	theLines);
 	spaceMethods(	theLines);
 	indentMembers(	theLines);
+	alignParams(	theLines);
 
 end
 
