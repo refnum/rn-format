@@ -417,6 +417,45 @@ end
 
 
 #==============================================================================
+#		spaceMethods : Space methods within a class.
+#------------------------------------------------------------------------------
+def spaceMethods(theLines)
+
+	theLines.each_with_index do |theLine, theIndex|
+	
+		# Two blank lines before method comment
+		if (theLine[:text] =~ /^    / && !theLine[:comment].empty?)
+		
+			# Get the state we need
+			lineMinus3 = theLines[theIndex - 3];
+			lineMinus2 = theLines[theIndex - 2];
+			lineMinus1 = theLines[theIndex - 1];
+
+
+			# 3 blank lines
+			if (isLineEmpty(lineMinus1) && isLineEmpty(lineMinus2) && isLineEmpty(lineMinus3))
+				theLines.delete_at(theIndex - 2);
+
+			# 1 blank line
+			elsif (isLineEmpty(lineMinus1) && !isLineEmpty(lineMinus2))
+				theLines.insert(theIndex, EMPTY_LINE);
+
+			# 0 blank lines
+			elsif (!isLineEmpty(lineMinus1))
+				theLines.insert(theIndex, EMPTY_LINE);
+				theLines.insert(theIndex, EMPTY_LINE);
+			end
+
+		end
+	end
+
+end
+
+
+
+
+
+#==============================================================================
 #		indentMembers : Indent members within a class.
 #------------------------------------------------------------------------------
 def indentMembers(theLines)
@@ -682,6 +721,7 @@ end
 def formatClass(theLines)
 
 	replaceVoids(	theLines);
+	spaceMethods(	theLines);
 	indentMembers(	theLines);
 
 end
