@@ -429,7 +429,10 @@ def formatComments(theLines)
 				theComment = $1;
 				commentKey = $1.chomp('.').downcase;
 
-				if (COMMENT_STANDARD.has_key?(commentKey))
+				if (COMMENT_STANDARD.has_value?(theComment))
+					# Accept as-is
+
+				elsif (COMMENT_STANDARD.has_key?(commentKey))
 					theComment = COMMENT_STANDARD[commentKey];
 
 
