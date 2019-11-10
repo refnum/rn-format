@@ -611,6 +611,29 @@ end
 
 
 #==============================================================================
+#		alignEndifs : Align #endif.
+#------------------------------------------------------------------------------
+def alignEndifs(theLines)
+
+	# Collapse whitespace after #endif
+	#
+	# clang-format inserts IndentWidth spaces between a #endif
+	# and its comment.
+	theLines.each do |theLine|
+
+		if (theLine[:text] =~ /^(#endif\s)\s+/ && !theLine[:comment].empty?)
+			theLine[:text] = $1;
+		end
+
+	end
+
+end
+
+
+
+
+
+#==============================================================================
 #		alignTokens : Align consecutive tokens.
 #------------------------------------------------------------------------------
 def alignTokens(theLines, matchLine, matchTokens, findAfter=nil)
@@ -912,17 +935,7 @@ end
 #------------------------------------------------------------------------------
 def formatPreprocessor(theLines)
 
-	theLines.each do |theLine|
-
-		# Collapse whitespace after #endif
-		#
-		# clang-format inserts IndentWidth spaces between a #endif
-		# and its comment.
-		if (theLine[:text] =~ /^(#endif\s)\s+/ && !theLine[:comment].empty?)
-			theLine[:text] = $1;
-		end
-
-	end
+	alignEndifs(theLines);
 
 	return theLines;
 
