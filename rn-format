@@ -653,10 +653,26 @@ def alignTokens(theLines, matchLine, matchTokens, findAfter=nil)
 						lineMinusN = theLines[theIndex - n];
 						theOffset  = nil;
 
+						# Find a match
+						#
+						# Matches that are too far to re-align end the search.
 						if (matchLine.match(lineMinusN[:text]))
+
 							theOffset = findTokenInLine(lineMinusN, theToken, findAfter);
+
+							if (theOffset != nil)
+								maxOffset   = theOffsets.max;
+								offsetDelta = maxOffset - theOffset;
+
+								if (offsetDelta.abs >= CONFIG_ALIGN_SLIDE)
+									theOffset = nil;
+								end
+							end
+
 						end
-					
+						
+						
+						# Stop when can't match
 						if (theOffset != nil)
 							theOffsets << theOffset;
 						else
@@ -670,20 +686,22 @@ def alignTokens(theLines, matchLine, matchTokens, findAfter=nil)
 					if (theOffsets.size > 1)
 
 						# Dump the state before
+						maxOffset  = theOffsets.max;
 						debugAlign = false;
 
 						if (debugAlign)
 							puts "Found #{theOffsets.size} instances of [#{theToken}]:";
 							for n in 0...theOffsets.size do
+								theOffset   = theOffsets[n];
+								offsetDelta = maxOffset - theOffset;
+
 								puts "[#{n}] [#{theLines[theIndex - n][:text]}]";
-								puts "     " + (" " * theOffsets[n]) + "^";
+								puts "     " + (" " * theOffset) + "^ (#{offsetDelta} from max offset)";
 							end
 						end
 
 
 						# Apply the alignment
-						maxOffset = theOffsets.max;
-					
 						for n in 0...theOffsets.size do
 							theOffset   = theOffsets[n];
 							offsetDelta = maxOffset - theOffset;
@@ -720,7 +738,7 @@ end
 
 
 #==============================================================================
-#		alignParams : Align parameters.
+#		alignParams : Align method parameters.
 #------------------------------------------------------------------------------
 def alignParams(theLines)
 
@@ -772,6 +790,33 @@ def alignParams(theLines)
 	end
 
 	alignTokens(theLines, matchLine, matchTokens, "(");
+
+end
+
+
+
+
+
+#==============================================================================
+#		alignSpecifiers : Align method specifiers.
+#------------------------------------------------------------------------------
+def alignSpecifiers(theLines)
+
+	# Build the tokens
+	theTokens = [	" = 0",
+					" = delete",
+					" = default",
+					" override",
+					" final",
+					" const" ];
+
+
+
+	# Align the tokens
+	matchTokens = theTokens;
+	matchLine   = /\)/;
+
+	alignTokens(theLines, matchLine, matchTokens, ")");
 
 end
 
@@ -914,10 +959,11 @@ end
 #------------------------------------------------------------------------------
 def formatClass(theLines)
 
-	replaceVoids(	theLines);
-	spaceMethods(	theLines);
-	indentMembers(	theLines);
-	alignParams(	theLines);
+	replaceVoids(		theLines);
+	spaceMethods(		theLines);
+	indentMembers(		theLines);
+	alignParams(		theLines);
+	alignSpecifiers(	theLines);
 
 end
 
