@@ -314,11 +314,15 @@ def getFiles(theArgs)
 	theFiles = [];
 
 	theArgs[:paths].each do |pathRoot|
-
-		Find.find(pathRoot) do |thePath|
-			if (File.file?(thePath))
-				theFiles << thePath;
+	
+		if (File.exist?(pathRoot))
+			Find.find(pathRoot) do |thePath|
+				if (File.file?(thePath))
+					theFiles << thePath;
+				end
 			end
+		else
+			puts "Skipping #{pathRoot}";
 		end
 	end
 
