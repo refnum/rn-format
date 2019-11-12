@@ -618,6 +618,13 @@ end
 #------------------------------------------------------------------------------
 def splitAndAlign(theLines, splitWith, joinWith)
 
+	# Get the state we need
+	if (splitWith.class != Array)
+		splitWith = [splitWith];
+	end
+
+
+
 	# Find the groups
 	#
 	# We align contiguous groups of lines that can be split the same way.
@@ -626,18 +633,21 @@ def splitAndAlign(theLines, splitWith, joinWith)
 	prevIndex = -1;
 	
 	theLines.each_with_index do |theLine, theIndex|
-
-		theMatch = splitWith.match(theLine[:text]);
-		if (theMatch != nil)
-			if (theIndex != (prevIndex + 1) && !theGroup.empty?)
-				theGroups <<= theGroup;
-				theGroup    = Hash.new();
-			end
+		splitWith.each do |splitRegex|
+		
+			theMatch = splitRegex.match(theLine[:text]);
+			if (theMatch != nil)
+				if (theIndex != (prevIndex + 1) && !theGroup.empty?)
+					theGroups <<= theGroup;
+					theGroup    = Hash.new();
+				end
 			
-			theGroup[theIndex] = { :start => theMatch[1], :end => theMatch[2] };
-			prevIndex          = theIndex;
-		end
+				theGroup[theIndex] = { :start => theMatch[1], :end => theMatch[2] };
+				prevIndex          = theIndex;
+				break;
+			end
 
+		end
 	end
 
 	theGroups << theGroup;
@@ -744,7 +754,8 @@ end
 #------------------------------------------------------------------------------
 def alignDefineValue(theLines)
 
-	splitAndAlign(theLines, /^(\s*#define \w+)\s+(.*?)$/, "");
+	splitAndAlign(theLines, [/^(\s*#define \w+)\s+(.*?)$/,
+							 /^(\s*#define \w+\(.*?\))\s+(.*?)$/], "");
 
 end
 
