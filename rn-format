@@ -764,6 +764,19 @@ end
 
 
 #==============================================================================
+#		alignAssignments : Align assignments.
+#------------------------------------------------------------------------------
+def alignAssignments(theLines)
+
+	splitAndAlign(theLines, /^(.*?)\s+= (.*[^\\])$/, "= ");
+
+end
+
+
+
+
+
+#==============================================================================
 #		alignTokens : Align consecutive tokens.
 #------------------------------------------------------------------------------
 def alignTokens(theLines, matchLine, matchTokens, findAfter=nil)
@@ -1076,7 +1089,9 @@ end
 #		formatEnum : Format an enum.
 #------------------------------------------------------------------------------
 def formatEnum(theLines)
-	# TODO
+
+	alignAssignments(theLines);
+
 end
 
 
@@ -1141,7 +1156,9 @@ end
 #		formatGlobal : Format a global scope.
 #------------------------------------------------------------------------------
 def formatGlobal(theLines)
-	# TODO
+
+	alignAssignments(theLines);
+
 end
 
 
