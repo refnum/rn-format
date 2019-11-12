@@ -906,17 +906,11 @@ def formatComments(theLines)
 					theComment = COMMENT_STANDARD[commentKey];
 
 
+
 				# Fix up function blocks
-				else
-					# Split the comment
-					if (theComment =~ /^(.*):\s*(.*)$/)
-						theName = $1.strip;
-						theDesc = $2.strip.chomp(".");
-					
-					else
-						theName = theComment;
-						theDesc = "";
-					end
+				elsif (theComment =~ /^(.*)\s:\s(.*)$/)
+					theName = $1.strip;
+					theDesc = $2.strip.chomp(".");
 
 
 					# Normalise the description
