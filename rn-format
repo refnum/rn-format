@@ -1074,8 +1074,8 @@ def formatPreprocessor(theLines)
 
 	alignEndifs(		theLines);
 	alignUndefineDefine(theLines);
-	alignContinuations(	theLines);
 	alignDefineValue(	theLines);
+	alignContinuations(	theLines);
 
 	return theLines;
 
