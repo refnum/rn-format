@@ -660,6 +660,31 @@ end
 
 
 #==============================================================================
+#		alignUndefineDefine : Align a #undef / #define pair.
+#------------------------------------------------------------------------------
+def alignUndefineDefine(theLines)
+
+	theLines.each_with_index do |theLine, theIndex|
+
+		theText = theLine[:text];
+		if (theText =~ /^\s*#undef /)
+
+			matchText = theText.sub('#undef', '#define');
+			nextText  = theLines[theIndex + 1][:text];
+
+			if (nextText.start_with?(matchText))
+				theLine[:text].sub!('#undef', '#undef ');
+			end
+		end
+	end
+
+end
+
+
+
+
+
+#==============================================================================
 #		alignTokens : Align consecutive tokens.
 #------------------------------------------------------------------------------
 def alignTokens(theLines, matchLine, matchTokens, findAfter=nil)
@@ -957,6 +982,7 @@ def formatPreprocessor(theLines)
 
 	alignEndifs(		theLines);
 	alignContinuations(	theLines);
+	alignUndefineDefine(theLines);
 
 	return theLines;
 
