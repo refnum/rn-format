@@ -614,6 +614,71 @@ end
 
 
 #==============================================================================
+#		splitAndAlign : Split and align values.
+#------------------------------------------------------------------------------
+def splitAndAlign(theLines, splitWith, joinWith)
+
+	# Find the groups
+	#
+	# We align contiguous groups of lines that can be split the same way.
+	theGroups = Array.new();
+	theGroup  = Hash.new();
+	prevIndex = -1;
+	
+	theLines.each_with_index do |theLine, theIndex|
+
+		theMatch = splitWith.match(theLine[:text]);
+		if (theMatch != nil)
+			if (theIndex != (prevIndex + 1) && !theGroup.empty?)
+				theGroups <<= theGroup;
+				theGroup    = Hash.new();
+			end
+			
+			theGroup[theIndex] = { :start => theMatch[1], :end => theMatch[2] };
+			prevIndex          = theIndex;
+		end
+
+	end
+
+	theGroups << theGroup;
+
+
+
+	# Align the groups
+	#
+	# Each group is aligned on the alignment column, or one tab past the
+	# widest element if the elements are larger than the alignment column.
+	theGroups.each do |groupInfo|
+	
+		# Determine the width
+		maxWidth = CONFIG_ALIGN_ASSIGNMENT - CONFIG_TAB_WIDTH;
+		
+		groupInfo.each_pair do |theIndex, theInfo|
+			theWidth = theInfo[:start].length;
+			if (theWidth > maxWidth)
+				maxWidth = theWidth;
+			end
+		end
+		
+		maxWidth += (CONFIG_TAB_WIDTH - (maxWidth % CONFIG_TAB_WIDTH));
+
+
+		# Align the group
+		groupInfo.each_pair do |theIndex, theInfo|
+			theLines[theIndex][:text] = theInfo[:start].ljust(maxWidth) + joinWith + theInfo[:end];
+			if (theLines[theIndex][:comment].empty?)
+				theLines[theIndex][:text].rstrip!;
+			end
+		end
+	end
+
+end
+
+
+
+
+
+#==============================================================================
 #		alignEndifs : Align #endif.
 #------------------------------------------------------------------------------
 def alignEndifs(theLines)
@@ -677,6 +742,19 @@ def alignUndefineDefine(theLines)
 			end
 		end
 	end
+
+end
+
+
+
+
+
+#==============================================================================
+#		alignDefineValues : Align #define values.
+#------------------------------------------------------------------------------
+def alignDefineValue(theLines)
+
+	splitAndAlign(theLines, /^(\s*#define \w+)\s+(.*?)$/, "");
 
 end
 
@@ -983,6 +1061,7 @@ def formatPreprocessor(theLines)
 	alignEndifs(		theLines);
 	alignContinuations(	theLines);
 	alignUndefineDefine(theLines);
+	alignDefineValue(	theLines);
 
 	return theLines;
 
