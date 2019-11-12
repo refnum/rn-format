@@ -702,29 +702,6 @@ end
 
 
 #==============================================================================
-#		alignContinuations : Align line continuations.
-#------------------------------------------------------------------------------
-def alignContinuations(theLines)
-
-	theLines.each do |theLine|
-
-		if (theLine[:text] =~ /^(.*)\s+\\$/ && theLine[:comment].empty?)
-			theText = $1;
-			
-			if (theText.size < CONFIG_ALIGN_ASSIGNMENT)
-				theLine[:text] = theText.ljust(CONFIG_ALIGN_ASSIGNMENT) + "\\";
-			end
-		end
-
-	end
-
-end
-
-
-
-
-
-#==============================================================================
 #		alignUndefineDefine : Align a #undef / #define pair.
 #------------------------------------------------------------------------------
 def alignUndefineDefine(theLines)
@@ -742,6 +719,19 @@ def alignUndefineDefine(theLines)
 			end
 		end
 	end
+
+end
+
+
+
+
+
+#==============================================================================
+#		alignContinuations : Align line continuations.
+#------------------------------------------------------------------------------
+def alignContinuations(theLines)
+
+	splitAndAlign(theLines, /^(.*?)\s+(\\)$/, "");
 
 end
 
@@ -1059,8 +1049,8 @@ end
 def formatPreprocessor(theLines)
 
 	alignEndifs(		theLines);
-	alignContinuations(	theLines);
 	alignUndefineDefine(theLines);
+	alignContinuations(	theLines);
 	alignDefineValue(	theLines);
 
 	return theLines;
