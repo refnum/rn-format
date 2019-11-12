@@ -462,6 +462,33 @@ end
 
 
 #==============================================================================
+#		spaceFirstComment : Space the first comment within a function.
+#------------------------------------------------------------------------------
+def spaceFirstComment(theLines)
+
+	theLines.each_with_index do |theLine, theIndex|
+
+		# Two blank lines between brace and leading comment
+		if (theLine[:text] == "{" && theLine[:comment].empty?)
+		
+			nextLine = theLines[theIndex + 1];
+
+			if (nextLine[:text] =~ /^\s*$/ && !nextLine[:comment].empty?)
+				theLines.insert(theIndex + 1, EMPTY_LINE);
+				theLines.insert(theIndex + 1, EMPTY_LINE);
+				break;
+			end
+		end
+
+	end
+
+end
+
+
+
+
+
+#==============================================================================
 #		indentMembers : Indent members within a class.
 #------------------------------------------------------------------------------
 def indentMembers(theLines)
@@ -1144,7 +1171,8 @@ end
 #------------------------------------------------------------------------------
 def formatFunction(theLines)
 
-	replaceVoids(theLines);
+	replaceVoids(		theLines);
+	spaceFirstComment(	theLines);
 
 end
 
