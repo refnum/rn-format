@@ -438,6 +438,7 @@ def spaceMethods(theLines)
 			lineMinus1 = theLines[theIndex - 1];
 
 
+
 			# 3 blank lines
 			if (isLineEmpty(lineMinus1) && isLineEmpty(lineMinus2) && isLineEmpty(lineMinus3))
 				theLines.delete_at(theIndex - 2);
@@ -446,8 +447,8 @@ def spaceMethods(theLines)
 			elsif (isLineEmpty(lineMinus1) && !isLineEmpty(lineMinus2))
 				theLines.insert(theIndex, EMPTY_LINE);
 
-			# 0 blank lines
-			elsif (!isLineEmpty(lineMinus1))
+			# 0 blank lines (and not an access modifier / prior comment)
+			elsif (!isLineEmpty(lineMinus1) && lineMinus1[:text] =~ /^    \w/)
 				theLines.insert(theIndex, EMPTY_LINE);
 				theLines.insert(theIndex, EMPTY_LINE);
 			end
