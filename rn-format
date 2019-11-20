@@ -501,6 +501,9 @@ def indentMembers(theLines)
 	
 		# Get the state we need
 		theText = theLine[:text];
+		nextText = getLine(theLines, theIndex + 1)[:text];
+		isInline = (nextText =~ /^\s+[{:]/);
+
 
 
 		# Constructors
@@ -508,12 +511,13 @@ def indentMembers(theLines)
 			methodName   = $1;
 			methodParams = $2;
 			
-			spanSize = CONFIG_ALIGN_MEMBER;
+			spanSize = (isInline ? CONFIG_TAB_WIDTH : CONFIG_ALIGN_MEMBER);
 			theText = (" " * spanSize) + methodName + methodParams;
 			
 			if (theText.end_with?(","))
 				paramIndent = theText.size() - methodParams.size() + 1;
 			end
+
 
 
 		# Destructors
@@ -522,8 +526,13 @@ def indentMembers(theLines)
 			methodName    = $2.strip;
 			methodParams  = $3;
 			
-			spanSize = CONFIG_ALIGN_MEMBER - 2;
+			spanSize = (isInline ? 0 : (CONFIG_ALIGN_MEMBER - 2));
 			theText = (indentType + methodVirtual).ljust(spanSize) + " " + methodName + methodParams;
+			
+			if (isInline && methodVirtual.empty?)
+				theText = theText[1..-1];
+			end
+
 
 
 		# Methods
@@ -543,12 +552,13 @@ def indentMembers(theLines)
 				methodName = "operator #{methodName}";
 			end
 
-			spanSize = CONFIG_ALIGN_MEMBER - 1;
+			spanSize = (isInline ? 0 : (CONFIG_ALIGN_MEMBER - 1));
 			theText = (indentType + methodType).ljust(spanSize) + " " + methodName + methodParams;
 					
 			if (theText.end_with?(","))
 				paramIndent = theText.size() - methodParams.size() + 1;
 			end
+
 
 
 		# Members
@@ -562,6 +572,7 @@ def indentMembers(theLines)
 			theText = (indentType + memberType).ljust(spanSize) + " " + memberName;
 
 
+
 		# Parameters
 		elsif (paramIndent != 0)
 			theText.sub!(/^\s+/, " " * paramIndent);
@@ -572,9 +583,10 @@ def indentMembers(theLines)
 		end
 
 
+
 		# Update the line
 		theLine[:text] = theText;
-	
+
 	end
 
 end
