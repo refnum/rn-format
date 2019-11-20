@@ -1503,14 +1503,19 @@ def reformatFile(theArgs, theFile)
 	newText = reformattedFile(theArgs, theFile);
 
 
-	# Rewrite it
-	if (theArgs[:rewrite])
-		if (newText != oldText)
-			puts "Reformatted #{theFile}";
-			File.write(theFile, newText);
-		end
+
+	# Show the output
+	if (newText.empty? && !oldText.empty?)
+		puts "Skipping #{theFile}, clang-format failed!";
 	else
-		puts newText;
+		if (theArgs[:rewrite])
+			if (newText != oldText)
+				puts "Reformatted #{theFile}";
+				File.write(theFile, newText);
+			end
+		else
+			puts newText;
+		end
 	end
 
 end
