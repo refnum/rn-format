@@ -322,7 +322,7 @@ def getFiles(theArgs)
 				end
 			end
 		else
-			puts "Skipping #{pathRoot}";
+			puts "Skipping #{pathRoot}, file not found";
 		end
 	end
 
