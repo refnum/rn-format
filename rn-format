@@ -413,7 +413,7 @@ end
 def replaceVoids(theLines)
 
 	theLines.each do |theLine|
-		theLine[:text].gsub!(/\(\s*void\s*\)/, '()');
+		theLine[:text].gsub!(/(\w)\(\s*void\s*\)/, '\1()');
 	end
 	
 end
