@@ -1171,7 +1171,8 @@ end
 #------------------------------------------------------------------------------
 def formatConstructor(theLines)
 
-	replaceVoids(theLines);
+	replaceVoids(		theLines);
+	spaceFirstComment(	theLines);
 
 end
 
