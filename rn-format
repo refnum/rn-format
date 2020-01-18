@@ -1425,7 +1425,7 @@ def rewriteHeaderGuard(theText, theFile)
 		if (theMatch != nil)
 			theName = File.basename(theFile);
 			theName = theName.split(/(?<=[a-z])(?=[A-Z])/).join("_");
-			theName = theName.sub(".", "_").upcase;
+			theName = theName.gsub(/[\. ]/, "_").upcase;
 
 			theText[theMatch.begin(3)..theMatch.end(3) - 1] = theName;
 			theText[theMatch.begin(2)..theMatch.end(2) - 1] = theName;
