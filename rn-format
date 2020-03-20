@@ -320,7 +320,7 @@ def getFiles(theArgs)
 	
 		if (File.exist?(pathRoot))
 			Find.find(pathRoot) do |thePath|
-				if (File.file?(thePath))
+				if (File.file?(thePath) && !theArgs[:exclude].include?(thePath))
 					theFiles << thePath;
 				end
 			end
@@ -1575,25 +1575,30 @@ def getArguments
 	theArgs = { :clang   => false,
 				:rewrite => false,
 				:help    => false,
-				:paths   => [] }
+				:paths   => [],
+				:exclude => [] }
 
 	theParser = OptionParser.new do |opts|
-		opts.banner    = "Usage:\n    rn-format [--help] [--clang] [--rewrite] PATH [PATH...]";
+		opts.banner    = "Usage:\n    rn-format [--help] [--clang] [--rewrite] [--exclude=PATH] PATH [PATH...]";
 		opts.separator "";
 		opts.separator "Reformat any source files within the supplied paths,";
 		opts.separator "displaying the results to standard output.";
 		opts.separator "";
 		opts.separator "Options:";
 
-		opts.on('-c', '--clang',					'Show raw clang-format output') do
+		opts.on('--clang',						'Show raw clang-format output') do
 			theArgs[:clang] = true;
 		end
 
-		opts.on('-r', '--rewrite',					'Rewrite files in-place') do
+		opts.on('--rewrite',					'Rewrite files in-place') do
 			theArgs[:rewrite] = true;
 		end
 
-		opts.on('-h', '--help',						'Show the help') do
+		opts.on('--exclude=PATH',				'Exclude a path') do |thePath|
+			theArgs[:exclude] << File.expand_path(thePath);
+		end
+
+		opts.on('--help',						'Show the help') do
 			theArgs[:help] = true;
 		end
 	end
