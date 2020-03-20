@@ -39,6 +39,7 @@
 #==============================================================================
 #		Imports
 #------------------------------------------------------------------------------
+require 'digest';
 require 'fileutils';
 require 'find';
 require 'optparse';
@@ -51,8 +52,9 @@ require 'tmpdir';
 #==============================================================================
 #		Constants
 #------------------------------------------------------------------------------
-# Paths
+# Files
 #
+PATH_FORMAT_CACHE = "/tmp/rn-format";
 PATH_CLANG_FORMAT = `which clang-format`.chomp;
 PATH_UNCRUSTIFY   = `which uncrustify`.chomp;
 
@@ -302,6 +304,22 @@ def getConfig(theArgs)
 	File.write("#{pathConfig}/#{FILE_CONFIG_UNCRUSTIFY}",	CONFIG_UNCRUSTIFY);
 
 	return pathConfig;
+
+end
+
+
+
+
+
+#==============================================================================
+#		getContentCache : Get the cache for content.
+#------------------------------------------------------------------------------
+def getContentCache(theContent)
+
+	theChecksum = Digest::SHA256.hexdigest(theContent).insert(2, '/');
+	theCache    = "#{PATH_FORMAT_CACHE}/#{theChecksum}";
+	
+	return theCache;
 
 end
 
@@ -1514,24 +1532,42 @@ end
 #------------------------------------------------------------------------------
 def reformatFile(theArgs, theFile)
 
+	# Get the state we need
+	oldContent = File.read(theFile);
+	oldCache   = getContentCache(oldContent);
+
+
 	# Reformat the file
-	oldText = File.read(theFile);
-	newText = reformattedFile(theArgs, theFile);
+	#
+	# Our cache maintains the checksum of reformatted files.
+	#
+	# We assume that a file whose checksum exists in the cache
+	# contains content that has already been reformatted.
+	if (!File.exist?(oldCache))
+		# Reformat the file
+		newContent = reformattedFile(theArgs, theFile);
+		newCache   = getContentCache(newContent);
 
+		if (newContent.empty? && !fileContent.empty?)
+			puts "Skipping #{theFile}, clang-format failed!";
 
-
-	# Show the output
-	if (newText.empty? && !oldText.empty?)
-		puts "Skipping #{theFile}, clang-format failed!";
-	else
-		if (theArgs[:rewrite])
-			if (newText != oldText)
-				puts "Reformatted #{theFile}";
-				File.write(theFile, newText);
-			end
 		else
-			puts newText;
+			# Rewrite the file
+			if (theArgs[:rewrite])
+
+				if (newContent != oldContent || !File.exist?(newCache))
+					puts "Reformatted #{theFile}";
+					File.write(theFile, newContent);
+					FileUtils.mkdir_p(  newCache);
+				end
+			
+			
+			# Or display it
+			else
+				puts newContent;
+			end
 		end
+	
 	end
 
 end
