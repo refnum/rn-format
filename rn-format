@@ -60,7 +60,7 @@ PATH_UNCRUSTIFY   = `which uncrustify`.chomp;
 
 FILE_CONFIG_UNCRUSTIFY = "uncrustify.cfg";
 
-FILE_IGNORE = [".DS_Store"];
+FILES_EXCLUDE = [".DS_Store"];
 
 
 
@@ -332,14 +332,21 @@ end
 #------------------------------------------------------------------------------
 def getFiles(theArgs)
 
-	theFiles = [];
+	theFiles     = [];
+	pathsExclude = theArgs[:exclude];
 
 	theArgs[:paths].each do |pathRoot|
 	
 		if (File.exist?(pathRoot))
 			Find.find(pathRoot) do |thePath|
-				if (File.file?(thePath) && !theArgs[:exclude].include?(thePath))
-					theFiles << thePath;
+				if (File.file?(thePath))
+
+					if (!pathsExclude.include?(thePath))
+						if (!FILES_EXCLUDE.include?(File.basename(thePath)))
+							theFiles << thePath;
+						end
+					end
+
 				end
 			end
 		else
@@ -1548,7 +1555,7 @@ def reformatFile(theArgs, theFile)
 		newContent = reformattedFile(theArgs, theFile);
 		newCache   = getContentCache(newContent);
 
-		if (newContent.empty? && !fileContent.empty?)
+		if (newContent.empty? && !oldContent.empty?)
 			puts "Skipping #{theFile}, clang-format failed!";
 
 		else
@@ -1589,9 +1596,7 @@ def reformatFiles(theArgs)
 
 	# Reformat the files
 	theFiles.each do |theFile|
-		if (!FILE_IGNORE.include?(File.basename(theFile)))
-			reformatFile(theArgs, theFile)
-		end
+		reformatFile(theArgs, theFile)
 	end
 	
 	FileUtils.rm_rf(pathConfig);
